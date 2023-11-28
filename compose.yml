@@ -1,0 +1,17 @@
+services:
+  go: &go
+    env_file: .env
+    tty: true
+    stdin_open: true
+    build:
+      context: .
+      target: builder
+    entrypoint: go
+    command: help
+    volumes:
+      - .:/usr/src/app:delegated
+      - gomod:/go/pkg/mod
+      - ${LOCAL_DEP_PATH:-..}:/local
+
+volumes:
+  gomod: {}

@@ -1,0 +1,10 @@
+on:
+  push:
+    branches:
+      - main
+
+name: Publish Image
+
+jobs:
+  image:
+    uses: orbservability/.github/.github/workflows/publish_image.yml@main
