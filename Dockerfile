@@ -14,6 +14,9 @@ RUN go mod download
 # Copy the source code from the current directory to the working directory inside the container.
 COPY . .
 
+# Create a non-root user and group to run the application.
+RUN groupadd -r nonroot && useradd --no-log-init -r -g nonroot nonroot
+
 # Build the binary with full module support and without Cgo.
 # Compile the binary statically including all dependencies.
 RUN CGO_ENABLED=0 GOOS=linux go build -mod=readonly -a -installsuffix cgo -o /go/bin/main .
@@ -24,10 +27,8 @@ FROM scratch AS runtime
 
 WORKDIR /usr/src/app
 
-# Create a non-root user and group with the user ID and group ID set to 10001
+# Import the the user and group information
 COPY --from=builder /etc/passwd /etc/group /etc/
-RUN addgroup --system --gid 10001 nonroot && \
-    adduser --system --uid 10001 --ingroup nonroot nonroot
 
 # Import the Certificate-Authority certificates for enabling HTTPS.
 # This is important for applications that make external HTTPS calls.
