@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"time"
 
 	"px.dev/pxapi"
 	"px.dev/pxapi/errdefs"
@@ -14,22 +15,24 @@ import (
 )
 
 func main() {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+  defer cancel()
+
 	// Create a Pixie client with local standalonePEM listening address
-	ctx := context.Background()
 	client, err := pxapi.NewClient(
 		ctx,
 		pxapi.WithDirectAddr("127.0.0.1:12345"),
 		pxapi.WithDirectCredsInsecure(),
 	)
 	if err != nil {
-		panic(err)
+		log.Fatalf("Failed to create Pixie client: %v", err)
 	}
 
 	// Create a connection to the host.
 	hostID := "localhost"
 	vz, err := client.NewVizierClient(ctx, hostID)
 	if err != nil {
-		panic(err)
+		log.Fatalf("Failed to create Vizier client: %v", err)
 	}
 
 	// Create TableMuxer to accept results table.
@@ -38,14 +41,14 @@ func main() {
 	// Read PxL script from file
 	content, err := os.ReadFile("./config/config.pxl")
 	if err != nil {
-		panic(err)
+		log.Fatalf("Failed to read PxL script: %v", err)
 	}
 	pxl := string(content)
 
 	// Execute the PxL script and get the resultSet
 	resultSet, err := vz.ExecuteScript(ctx, pxl, tm)
 	if err != nil {
-		panic(err)
+		log.Fatalf("Failed to execute script: %v", err)
 	}
 	defer resultSet.Close()
 
@@ -53,17 +56,17 @@ func main() {
 	for {
 		err := resultSet.Stream()
 		if err != nil {
-			if err == io.EOF {
+			if err == io.EOF || err == context.Canceled {
 				// End of stream
 				break
 			}
 			if errdefs.IsCompilationError(err) {
-				log.Printf("Error compiling stream: %s", err.Error())
+				log.Printf("Compilation error: %v", err)
 				break
 			}
 			// Handle other kinds of runtime errors
 
-			log.Printf("Error streaming: %+v", err)
+			log.Printf("Stream error: %v", err)
 		}
 	}
 }
