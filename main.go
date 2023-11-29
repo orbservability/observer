@@ -16,7 +16,7 @@ import (
 
 func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-  defer cancel()
+	defer cancel()
 
 	// Create a Pixie client with local standalonePEM listening address
 	client, err := pxapi.NewClient(
@@ -45,29 +45,37 @@ func main() {
 	}
 	pxl := string(content)
 
-	// Execute the PxL script and get the resultSet
-	resultSet, err := vz.ExecuteScript(ctx, pxl, tm)
-	if err != nil {
-		log.Fatalf("Failed to execute script: %v", err)
-	}
-	defer resultSet.Close()
-
-	// Loop to receive the PxL script results.
 	for {
-		err := resultSet.Stream()
+		// Execute the PxL script and check for resultSet
+		resultSet, err := vz.ExecuteScript(ctx, pxl, tm)
 		if err != nil {
-			if err == io.EOF || err == context.Canceled {
-				// End of stream
-				break
-			}
-			if errdefs.IsCompilationError(err) {
-				log.Printf("Compilation error: %v", err)
-				break
-			}
-			// Handle other kinds of runtime errors
-
-			log.Printf("Stream error: %v", err)
+			log.Fatalf("Failed to execute script: %v", err)
 		}
+		defer resultSet.Close()
+
+		for {
+			// Receive the PxL script results.
+			err := resultSet.Stream()
+			if err != nil {
+				if err == io.EOF {
+					// End of stream, break inner loop to reopen stream
+					break
+				}
+				if err == context.Canceled {
+					log.Fatalf("Context canceled: %v", err)
+				}
+				if err.Error() == "stream has already been closed" {
+					log.Fatalf("Stream unexpectedly closed: %v", err)
+				}
+				if errdefs.IsCompilationError(err) {
+					log.Fatalf("Compilation error: %v", err)
+				}
+				// Handle other kinds of runtime errors
+
+				log.Fatalf("Stream error: %v", err)
+			}
+		}
+		time.Sleep(time.Second)
 	}
 }
 
