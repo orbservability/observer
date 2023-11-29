@@ -4,27 +4,11 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 
 	"px.dev/pxapi"
 	"px.dev/pxapi/errdefs"
 	"px.dev/pxapi/types"
-)
-
-// Define PxL script with one table output.
-var (
-	pxl = `
-import px
-
-# Look at the http_events.
-df = px.DataFrame(table='http_events')
-
-# Grab the command line from the metadata.
-df.cmdline = px.upid_to_cmdline(df.upid)
-
-# Limit to the first 10.
-df = df.head(10)
-
-px.display(df)`
 )
 
 func main() {
@@ -38,19 +22,30 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	// Create a connection to the host.
 	hostID := "localhost"
 	vz, err := client.NewVizierClient(ctx, hostID)
 	if err != nil {
 		panic(err)
 	}
+
 	// Create TableMuxer to accept results table.
 	tm := &tableMux{}
+
+	// Read PxL script from file
+	content, err := os.ReadFile("./config/config.pxl")
+	if err != nil {
+		panic(err)
+	}
+	pxl := string(content)
+
 	// Execute the PxL script.
 	resultSet, err := vz.ExecuteScript(ctx, pxl, tm)
 	if err != nil && err != io.EOF {
 		panic(err)
 	}
+
 	// Receive the PxL script results.
 	defer resultSet.Close()
 	if err := resultSet.Stream(); err != nil {
@@ -60,6 +55,7 @@ func main() {
 			fmt.Printf("Got error : %+v, while streaming\n", err)
 		}
 	}
+
 	// Get the execution stats for the script execution.
 	stats := resultSet.Stats()
 	fmt.Printf("Execution Time: %v\n", stats.ExecutionTime)
