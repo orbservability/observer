@@ -57,20 +57,16 @@ func main() {
 			// Receive the PxL script results.
 			err := resultSet.Stream()
 			if err != nil {
-				if err == io.EOF {
-					// End of stream, break inner loop to reopen stream
+				if err == io.EOF || err.Error() == "stream has already been closed" {
+					// End of stream or stream closed, break to reopen stream
 					break
 				}
 				if err == context.Canceled {
 					log.Fatalf("Context canceled: %v", err)
 				}
-				if err.Error() == "stream has already been closed" {
-					log.Fatalf("Stream unexpectedly closed: %v", err)
-				}
 				if errdefs.IsCompilationError(err) {
 					log.Fatalf("Compilation error: %v", err)
 				}
-				// Handle other kinds of runtime errors
 
 				log.Fatalf("Stream error: %v", err)
 			}
