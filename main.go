@@ -14,9 +14,10 @@ import (
 	"px.dev/pxapi/types"
 )
 
+const MaxErrorCount = 3
+
 func main() {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx := context.Background()
 
 	// Create a Pixie client with local standalonePEM listening address
 	client, err := pxapi.NewClient(
@@ -45,13 +46,20 @@ func main() {
 	}
 	pxl := string(content)
 
+	executionErrorCount := 0
+
 	for {
 		// Execute the PxL script and check for resultSet
 		resultSet, err := vz.ExecuteScript(ctx, pxl, tm)
 		if err != nil {
-			log.Fatalf("Failed to execute script: %v", err)
+			executionErrorCount += 1
+			if executionErrorCount > MaxErrorCount {
+				log.Fatalf("Failed to execute PxL script: %v", err)
+			} else {
+				time.Sleep(time.Second)
+				continue
+			}
 		}
-		defer resultSet.Close()
 
 		for {
 			// Receive the PxL script results.
@@ -61,16 +69,14 @@ func main() {
 					// End of stream or stream closed, break to reopen stream
 					break
 				}
-				if err == context.Canceled {
-					log.Fatalf("Context canceled: %v", err)
-				}
 				if errdefs.IsCompilationError(err) {
 					log.Fatalf("Compilation error: %v", err)
 				}
 
-				log.Fatalf("Stream error: %v", err)
+				break
 			}
 		}
+		resultSet.Close()
 		time.Sleep(time.Second)
 	}
 }
@@ -92,7 +98,7 @@ func (t *tablePrinter) HandleRecord(ctx context.Context, r *types.Record) error 
 	recordMap := make(map[string]interface{})
 
 	for i, d := range r.Data {
-		recordMap[t.columnNames[i]] = d
+		recordMap[t.columnNames[i]] = d.String()
 	}
 
 	jsonRecord, err := json.Marshal(recordMap)
