@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"px.dev/pxapi"
@@ -14,15 +15,25 @@ import (
 	"px.dev/pxapi/types"
 )
 
-const MaxErrorCount = 3
+type Config struct {
+	PixieURL         string
+	PixieStreamSleep int
+	MaxErrorCount    int
+}
 
 func main() {
 	ctx := context.Background()
 
+	cfg := Config{
+		PixieURL:         getEnv("PIXIE_URL", "127.0.0.1:12345"),
+		PixieStreamSleep: getEnvAsInt("PIXIE_STREAM_SLEEP", 10),
+		MaxErrorCount:    getEnvAsInt("PIXIE_ERROR_MAX", 3),
+	}
+
 	// Create a Pixie client with local standalonePEM listening address
 	client, err := pxapi.NewClient(
 		ctx,
-		pxapi.WithDirectAddr("127.0.0.1:12345"),
+		pxapi.WithDirectAddr(cfg.PixieURL),
 		pxapi.WithDirectCredsInsecure(),
 	)
 	if err != nil {
@@ -53,10 +64,10 @@ func main() {
 		resultSet, err := vz.ExecuteScript(ctx, pxl, tm)
 		if err != nil {
 			executionErrorCount += 1
-			if executionErrorCount > MaxErrorCount {
+			if executionErrorCount > cfg.MaxErrorCount {
 				log.Fatalf("Failed to execute PxL script: %v", err)
 			} else {
-				time.Sleep(time.Second)
+				time.Sleep(time.Second * time.Duration(cfg.PixieStreamSleep))
 				continue
 			}
 		}
@@ -77,7 +88,7 @@ func main() {
 			}
 		}
 		resultSet.Close()
-		time.Sleep(time.Second)
+		time.Sleep(time.Second * time.Duration(cfg.PixieStreamSleep))
 	}
 }
 
@@ -120,4 +131,24 @@ type tableMux struct{}
 
 func (s *tableMux) AcceptTable(ctx context.Context, metadata types.TableMetadata) (pxapi.TableRecordHandler, error) {
 	return &tablePrinter{}, nil
+}
+
+func getEnv(key string, fallback string) string {
+	value := os.Getenv(key)
+	if len(value) == 0 {
+		return fallback
+	}
+	return value
+}
+
+func getEnvAsInt(key string, fallback int) int {
+	valueStr := os.Getenv(key)
+	if valueStr == "" {
+		return fallback
+	}
+	value, err := strconv.Atoi(valueStr)
+	if err != nil {
+		return fallback
+	}
+	return value
 }
