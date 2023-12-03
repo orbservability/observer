@@ -24,11 +24,7 @@ type Config struct {
 func main() {
 	ctx := context.Background()
 
-	cfg := Config{
-		PixieURL:         getEnv("PIXIE_URL", "127.0.0.1:12345"),
-		PixieStreamSleep: getEnvAsInt("PIXIE_STREAM_SLEEP", 10),
-		MaxErrorCount:    getEnvAsInt("PIXIE_ERROR_MAX", 3),
-	}
+	cfg := NewConfig()
 
 	// Create a Pixie client with local standalonePEM listening address
 	client, err := pxapi.NewClient(
@@ -92,6 +88,31 @@ func main() {
 	}
 }
 
+func NewConfig() *Config {
+	config := &Config{
+		PixieURL:         "127.0.0.1:12345", // Default URL
+		PixieStreamSleep: 10,                // Default sleep time in seconds
+		MaxErrorCount:    3,                 // Default maximum error count
+	}
+
+	// Override defaults if environment variables are set
+	if url := os.Getenv("PIXIE_URL"); url != "" {
+		config.PixieURL = url
+	}
+	if sleep := os.Getenv("PIXIE_STREAM_SLEEP"); sleep != "" {
+		if val, err := strconv.Atoi(sleep); err == nil {
+			config.PixieStreamSleep = val
+		}
+	}
+	if maxErr := os.Getenv("PIXIE_ERROR_MAX"); maxErr != "" {
+		if val, err := strconv.Atoi(maxErr); err == nil {
+			config.MaxErrorCount = val
+		}
+	}
+
+	return config
+}
+
 // Satisfies the TableRecordHandler interface.
 type tablePrinter struct {
 	columnNames []string // A slice of strings to hold column names
@@ -131,24 +152,4 @@ type tableMux struct{}
 
 func (s *tableMux) AcceptTable(ctx context.Context, metadata types.TableMetadata) (pxapi.TableRecordHandler, error) {
 	return &tablePrinter{}, nil
-}
-
-func getEnv(key string, fallback string) string {
-	value := os.Getenv(key)
-	if len(value) == 0 {
-		return fallback
-	}
-	return value
-}
-
-func getEnvAsInt(key string, fallback int) int {
-	valueStr := os.Getenv(key)
-	if valueStr == "" {
-		return fallback
-	}
-	value, err := strconv.Atoi(valueStr)
-	if err != nil {
-		return fallback
-	}
-	return value
 }
