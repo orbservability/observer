@@ -1,6 +1,6 @@
 # Observer
 
-Streams data sources to stdout.
+Streams Pixie PxL scripts to stdout.
 
 ## Usage
 
