@@ -1,7 +1,5 @@
 # Observer
 
-Streams Pixie PxL scripts to stdout.
-
 ## Usage
 
 ```sh
