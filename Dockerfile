@@ -19,7 +19,7 @@ RUN groupadd -r nonroot && useradd --no-log-init -r -g nonroot nonroot
 
 # Build the binary with full module support and without Cgo.
 # Compile the binary statically including all dependencies.
-RUN CGO_ENABLED=0 GOOS=linux go build -mod=readonly -a -installsuffix cgo -o /go/bin/main .
+RUN CGO_ENABLED=0 GOOS=linux go build -mod=readonly -a -installsuffix cgo -o /go/bin/main ./cmd/observer
 
 # Second stage: build the runtime container.
 # Start from a scratch image, which is an empty container.
