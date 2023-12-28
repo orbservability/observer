@@ -35,7 +35,7 @@ func (t *tablePrinter) HandleRecord(ctx context.Context, r *types.Record) error 
 		var value interface{}
 
 		switch v := d.(type) {
-    case *types.BooleanValue:
+		case *types.BooleanValue:
 			value = v.Value()
 		case *types.Int64Value:
 			value = v.Value()
@@ -45,10 +45,10 @@ func (t *tablePrinter) HandleRecord(ctx context.Context, r *types.Record) error 
 			value = v.Value()
 		case *types.UInt128Value:
 			value = v.Value()
-    default:
+		default:
 			// Fallback to string representation if type is unknown
 			value = d.String()
-    }
+		}
 
 		recordMap[t.headerValues[i]] = value
 	}

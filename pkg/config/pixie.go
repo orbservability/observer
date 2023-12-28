@@ -18,8 +18,8 @@ type Config struct {
 // It attempts to override these defaults with environment variables if they are set.
 //
 // Returns:
-//	- A pointer to an Config struct which contains configuration settings.
-//	- An error.
+//   - A pointer to an Config struct which contains configuration settings.
+//   - An error.
 //
 // Usage:
 //
