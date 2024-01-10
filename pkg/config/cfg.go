@@ -7,11 +7,13 @@ import (
 )
 
 type Config struct {
-	PixieURL         string
-	PxLFilePath      string
-	PxL              string
-	PixieStreamSleep int
-	MaxErrorCount    int
+	OrbservabilityURL string
+	PixieURL          string
+	VizierHost        string
+	PxLFilePath       string
+	PxL               string
+	PixieStreamSleep  int
+	MaxErrorCount     int
 }
 
 // NewConfig creates a new Config struct with default configuration.
@@ -29,16 +31,28 @@ type Config struct {
 //	}
 func NewConfig() (*Config, error) {
 	config := &Config{
-		PixieURL:         "127.0.0.1:12345",     // Default URL
-		PxLFilePath:      "./config/config.pxl", // Default script path
-		PxL:              "",                    // PxL script
-		PixieStreamSleep: 10,                    // Default sleep time in seconds
-		MaxErrorCount:    3,                     // Default maximum error count
+		OrbservabilityURL: "",                    // Default URL
+		PixieURL:          "127.0.0.1:12345",     // Default URL
+		VizierHost:        "localhost",           // Default Host
+		PxLFilePath:       "./config/config.pxl", // Default script path
+		PxL:               "",                    // PxL script
+		PixieStreamSleep:  10,                    // Default sleep time in seconds
+		MaxErrorCount:     3,                     // Default maximum error count
 	}
 
 	// Override defaults if environment variables are set
+
+	orb_url := os.Getenv("ORBSERVABILITY_URL")
+	if orb_url != "" {
+		config.OrbservabilityURL = orb_url
+	} else {
+		return nil, fmt.Errorf("ORBSERVABILITY_URL environment variable is missing")
+	}
 	if url := os.Getenv("PIXIE_URL"); url != "" {
 		config.PixieURL = url
+	}
+	if host := os.Getenv("VIZIER_HOST"); host != "" {
+		config.VizierHost = host
 	}
 	if path := os.Getenv("PXL_FILE_PATH"); path != "" {
 		config.PxLFilePath = path

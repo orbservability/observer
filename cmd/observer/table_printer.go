@@ -2,10 +2,9 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"log"
 
+	pb "github.com/orbservability/schemas/v1"
 	"px.dev/pxapi"
 	"px.dev/pxapi/errdefs"
 	"px.dev/pxapi/types"
@@ -14,6 +13,7 @@ import (
 // Satisfies the TableRecordHandler interface.
 type tablePrinter struct {
 	headerValues []string // A slice of strings to hold column names
+	grpcStream   pb.EventGatewayService_StreamEventsClient
 }
 
 func (t *tablePrinter) HandleInit(ctx context.Context, metadata types.TableMetadata) error {
@@ -53,14 +53,7 @@ func (t *tablePrinter) HandleRecord(ctx context.Context, r *types.Record) error 
 		recordMap[t.headerValues[i]] = value
 	}
 
-	jsonRecord, err := json.Marshal(recordMap)
-	if err != nil {
-		log.Printf("Error marshaling record to JSON: %s", err)
-		return err
-	}
-
-	fmt.Println(string(jsonRecord))
-	return nil
+	return streamEvent(t.grpcStream, recordMap)
 }
 
 func (t *tablePrinter) HandleDone(ctx context.Context) error {
@@ -68,8 +61,12 @@ func (t *tablePrinter) HandleDone(ctx context.Context) error {
 }
 
 // Satisfies the TableMuxer interface.
-type tableMux struct{}
+type tableMux struct {
+	grpcStream pb.EventGatewayService_StreamEventsClient
+}
 
 func (s *tableMux) AcceptTable(ctx context.Context, metadata types.TableMetadata) (pxapi.TableRecordHandler, error) {
-	return &tablePrinter{}, nil
+	return &tablePrinter{
+		grpcStream: s.grpcStream,
+	}, nil
 }
