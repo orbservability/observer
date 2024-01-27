@@ -4,6 +4,8 @@ go 1.21.6
 
 require (
 	github.com/orbservability/schemas v0.3.2
+	github.com/orbservability/telemetry v0.0.1
+	github.com/rs/zerolog v1.31.0
 	google.golang.org/grpc v1.60.1
 	px.dev/pxapi v0.5.0
 )
@@ -20,6 +22,8 @@ require (
 	github.com/lestrrat-go/iter v1.0.1 // indirect
 	github.com/lestrrat-go/jwx v1.2.17 // indirect
 	github.com/lestrrat-go/option v1.0.0 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/net v0.16.0 // indirect

@@ -2,37 +2,47 @@ package main
 
 import (
 	"context"
-	"log"
+
+	"github.com/orbservability/telemetry/pkg/logs"
+	"github.com/rs/zerolog/log"
 
 	"orbservability/observer/pkg/config"
+	"orbservability/observer/pkg/orbservability"
+	"orbservability/observer/pkg/pixie"
 )
 
 func main() {
 	ctx := context.Background()
 
+	// Initialize logger
+	err := logs.Init()
+	if err != nil {
+		log.Fatal().Err(err).Msg("Error initializing logger")
+	}
+
 	// Load Config
 	cfg, err := config.NewConfig()
 	if err != nil {
-		log.Fatal("Error loading config: ", err)
+		log.Fatal().Err(err).Msg("Error loading config")
 	}
 
 	// Create a Pixie client
-	pixieClient, err := createPixieClient(ctx, cfg)
+	pixieClient, err := pixie.CreateClient(ctx, cfg)
 	if err != nil {
-		log.Fatal("Error creating Pixie client: ", err)
+		log.Fatal().Err(err).Msg("Error creating Pixie client")
 	}
 
 	// Establish a connection to the gRPC server
-	grpcConn, grpcStream, err := createGrpcStream(ctx, cfg)
+	grpcConn, grpcStream, err := orbservability.CreateGrpcStream(ctx, cfg)
 	if err != nil {
-		log.Fatal("Error creating gRPC stream: ", err)
+		log.Fatal().Err(err).Msg("Error creating gRPC stream")
 	}
 	defer grpcConn.Close()
 	defer grpcStream.CloseAndRecv()
 
 	// Execute PxL scripts and handle records
-	tm := &tableMux{grpcStream: grpcStream}
-	if err := executeAndStream(ctx, pixieClient, cfg, tm); err != nil {
-		log.Fatal("Error handling records: ", err)
+	tm := &pixie.TableMux{GrpcStream: grpcStream}
+	if err := pixie.ExecuteAndStream(ctx, pixieClient, cfg, tm); err != nil {
+		log.Fatal().Err(err).Msg("Error handling records")
 	}
 }

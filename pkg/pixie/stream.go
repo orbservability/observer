@@ -1,4 +1,4 @@
-package main
+package pixie
 
 import (
 	"context"
@@ -10,15 +10,7 @@ import (
 	"px.dev/pxapi/errdefs"
 )
 
-func createPixieClient(ctx context.Context, cfg *config.Config) (*pxapi.Client, error) {
-	return pxapi.NewClient(
-		ctx,
-		pxapi.WithDirectAddr(cfg.PixieURL),
-		pxapi.WithDirectCredsInsecure(),
-	)
-}
-
-func executeAndStream(ctx context.Context, client *pxapi.Client, cfg *config.Config, tm *tableMux) error {
+func ExecuteAndStream(ctx context.Context, client *pxapi.Client, cfg *config.Config, tm *TableMux) error {
 	vz, err := client.NewVizierClient(ctx, cfg.VizierHost)
 	if err != nil {
 		return err
