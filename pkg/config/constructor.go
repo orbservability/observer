@@ -46,7 +46,7 @@ func NewConfig() (*Config, error) {
 	if orb_url != "" {
 		config.OrbservabilityURL = orb_url
 	} else {
-		return nil, fmt.Errorf("ORBSERVABILITY_URL environment variable is missing")
+		return nil, fmt.Errorf("ORBSERVABILITY_URL environment variable not set")
 	}
 	if url := os.Getenv("PIXIE_URL"); url != "" {
 		config.PixieURL = url
