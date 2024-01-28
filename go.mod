@@ -3,9 +3,9 @@ module orbservability/observer
 go 1.21.6
 
 require (
-	github.com/orbservability/io v0.0.2
+	github.com/orbservability/io v0.0.3
 	github.com/orbservability/schemas v0.3.2
-	github.com/orbservability/telemetry v0.0.1
+	github.com/orbservability/telemetry v0.0.2
 	github.com/rs/zerolog v1.31.0
 	google.golang.org/grpc v1.61.0
 	px.dev/pxapi v0.5.0

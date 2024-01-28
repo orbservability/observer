@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/orbservability/io/pkg/client"
-	"github.com/orbservability/telemetry/pkg/logs"
+	_ "github.com/orbservability/telemetry/pkg/logs"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -16,12 +16,6 @@ import (
 
 func main() {
 	ctx := context.Background()
-
-	// Initialize logger
-	err := logs.Init()
-	if err != nil {
-		log.Fatal().Err(err).Msg("Error initializing logger")
-	}
 
 	// Load Config
 	cfg, err := config.NewConfig()
