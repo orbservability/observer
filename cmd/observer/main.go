@@ -3,11 +3,14 @@ package main
 import (
 	"context"
 
+	"github.com/orbservability/io/pkg/client"
 	"github.com/orbservability/telemetry/pkg/logs"
 	"github.com/rs/zerolog/log"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"orbservability/observer/pkg/config"
-	"orbservability/observer/pkg/orbservability"
+	"orbservability/observer/pkg/eventgateway"
 	"orbservability/observer/pkg/pixie"
 )
 
@@ -32,12 +35,17 @@ func main() {
 		log.Fatal().Err(err).Msg("Error creating Pixie client")
 	}
 
-	// Establish a connection to the gRPC server
-	grpcConn, grpcStream, err := orbservability.CreateGrpcStream(ctx, cfg)
+	// Initialize gRPC client
+	eventGateway := &eventgateway.ServiceClient{}
+	grpcConn, err := client.DialGRPC(cfg.OrbservabilityURL, eventGateway, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal().Err(err).Msg("Error creating gRPC connection")
+	}
+	defer grpcConn.Close()
+	grpcStream, err := eventGateway.StreamEvents(ctx)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Error creating gRPC stream")
 	}
-	defer grpcConn.Close()
 	defer grpcStream.CloseAndRecv()
 
 	// Execute PxL scripts and handle records
