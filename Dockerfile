@@ -3,8 +3,23 @@
 # This is based on Debian and includes standard C libraries.
 FROM golang:1.21 AS builder
 
+ARG PROTOC_VERSION=25.2
+
+RUN apt-get update && apt-get install -y unzip && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 # Set the working directory outside $GOPATH to enable the support for modules.
 WORKDIR /usr/src/app
+
+# Install protoc
+RUN wget -nv https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-aarch_64.zip && \
+    unzip protoc-${PROTOC_VERSION}-linux-aarch_64.zip -d /usr/local && \
+    rm protoc-${PROTOC_VERSION}-linux-aarch_64.zip
+RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
+ENV PATH $PATH:$(go env GOPATH)/bin
 
 # Copy the Go Modules manifests and download the dependencies.
 # This is done before copying the code to leverage Docker cache layers.

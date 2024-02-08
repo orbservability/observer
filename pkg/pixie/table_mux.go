@@ -3,7 +3,8 @@ package pixie
 import (
 	"context"
 
-	pb "github.com/orbservability/schemas/v1"
+	pb "orbservability/observer/pkg/gen/pb/v1"
+
 	"px.dev/pxapi"
 	"px.dev/pxapi/types"
 )

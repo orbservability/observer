@@ -13,5 +13,10 @@ services:
       - gomod:/go/pkg/mod
       - ${LOCAL_DEP_PATH:-..}:/local
 
+  protoc:
+    <<: *go
+    entrypoint: protoc
+    command: -h
+
 volumes:
   gomod: {}

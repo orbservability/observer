@@ -3,7 +3,8 @@ package eventgateway
 import (
 	"context"
 
-	pb "github.com/orbservability/schemas/v1"
+	pb "orbservability/observer/pkg/gen/pb/v1"
+
 	"google.golang.org/grpc"
 )
 

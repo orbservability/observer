@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"reflect"
 
-	pb "github.com/orbservability/schemas/v1"
+	pb "orbservability/observer/pkg/gen/pb/v1"
+
 	"px.dev/pxapi/errdefs"
 	"px.dev/pxapi/types"
 )
